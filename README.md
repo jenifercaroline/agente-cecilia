@@ -83,32 +83,39 @@ python main.py
 
 ---
 
-## 🧪 Exemplo de uso
+## Estado atual do projeto
 
-registrar: Cecília mamou 180ml às 7h
-registrar: Cecília fez soneca das 9h às 11h
+- Agente CLI em Python
+- LLM local com Ollama
+- Memória persistente com SQLite
+- Extração de eventos da rotina com LLM
+- Memória estruturada por categoria, tipo de evento e horário
+- Contexto dinâmico enviado ao modelo
 
-Pergunta:
-Quando foi a última mamada?
+## Exemplo de memória estruturada
+
+Uma frase como:
+
+'''text
+Cecília acordou da soneca às 15h
 
 ## 📌 Próximos passos
 
- Automação de memória (sem precisar de "registrar:")
-
- Memória estruturada (tipo: sono, alimentação)
-
- RAG com busca semântica
-
- API com FastAPI
-
+ Próximos passos
+ Queries inteligentes
+ RAG simples por categoria
+ RAG com embeddings
+ FastAPI
  Interface web
 
 ##  Aprendizados
-Integração com LLM local
-Prompt engineering
-Gerenciamento de contexto
-Persistência de dados com SQLite
-Construção de agentes simples
+
+LLM local com Ollama
+CLI
+SQLite
+memória persistente
+memória estruturada
+extração de eventos com LLM
 
 ## 👩‍💻 Autora
 Jenifer,
