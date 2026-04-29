@@ -96,27 +96,25 @@ python main.py
 
 Uma frase como:
 
-'''text
 Cecília acordou da soneca às 15h
 
 ## 📌 Próximos passos
 
- Próximos passos
- Queries inteligentes
- RAG simples por categoria
- RAG com embeddings
- FastAPI
- Interface web
+  - Queries inteligentes
+  - RAG simples por categoria
+  - RAG com embeddings
+  - FastAPI
+  - Interface web
 
 ##  Aprendizados
 
-LLM local com Ollama
-CLI
-SQLite
-memória persistente
-memória estruturada
-extração de eventos com LLM
+ - LLM local com Ollama
+ - CLI
+ - SQLite
+ - memória persistente
+ - memória estruturada
+ - extração de eventos com LLM
 
 ## 👩‍💻 Autora
-Jenifer,
+Jenifer,</br>
 Mamãe da Cecília.
