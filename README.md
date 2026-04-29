@@ -111,5 +111,5 @@ Persistência de dados com SQLite
 Construção de agentes simples
 
 ## 👩‍💻 Autora
-Jenfier,
+Jenifer,
 Mamãe da Cecília.
