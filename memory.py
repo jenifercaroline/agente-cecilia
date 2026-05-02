@@ -1,11 +1,17 @@
+import os
 import sqlite3
 from datetime import datetime
 
 DB_PATH = "data/memories.db"
 
 
+def get_connection():
+    os.makedirs("data", exist_ok=True)
+    return sqlite3.connect(DB_PATH)
+
+
 def create_memory_table():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -24,8 +30,8 @@ def create_memory_table():
     conn.close()
 
 
-def save_memory(raw_text: str, category: str, event_type: str, event_time: str = None, notes: str = None):
-    conn = sqlite3.connect(DB_PATH)
+def save_memory(raw_text, category, event_type, event_time=None, notes=None):
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -46,7 +52,7 @@ def save_memory(raw_text: str, category: str, event_type: str, event_time: str =
             event_type,
             event_time,
             notes,
-            datetime.now().isoformat()
+            datetime.now().isoformat(timespec="seconds"),
         )
     )
 
@@ -54,8 +60,8 @@ def save_memory(raw_text: str, category: str, event_type: str, event_time: str =
     conn.close()
 
 
-def get_recent_memories(limit: int = 10):
-    conn = sqlite3.connect(DB_PATH)
+def get_recent_memories(limit=10):
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -70,5 +76,55 @@ def get_recent_memories(limit: int = 10):
 
     rows = cursor.fetchall()
     conn.close()
+    return rows
 
+
+def get_today_memories():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    today = datetime.now().date().isoformat()
+
+    cursor.execute(
+        """
+        SELECT raw_text, category, event_type, event_time, notes, created_at
+        FROM memories
+        WHERE DATE(created_at) = ?
+        ORDER BY id DESC
+        """,
+        (today,)
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+
+def search_memories(query, limit=20):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT raw_text, category, event_type, event_time, notes, created_at
+        FROM memories
+        WHERE
+            raw_text LIKE ?
+            OR category LIKE ?
+            OR event_type LIKE ?
+            OR notes LIKE ?
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (
+            f"%{query}%",
+            f"%{query}%",
+            f"%{query}%",
+            f"%{query}%",
+            limit,
+        )
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
     return rows

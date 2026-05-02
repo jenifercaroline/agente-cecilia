@@ -16,21 +16,24 @@ def main():
             break
 
         event = extract_memory_event(user_message)
+        saved_event = None
 
         if event.get("should_save"):
             save_memory(
-                raw_text=user_message,
+                raw_text=event.get("raw_text", user_message),
                 category=event.get("category"),
                 event_type=event.get("event_type"),
                 event_time=event.get("event_time"),
                 notes=event.get("notes"),
             )
 
+            saved_event = event
+
             print(
                 f"💾 Memória salva: {event.get('category')} / {event.get('event_type')} / {event.get('event_time')}"
             )
 
-        answer = ask_agent(user_message)
+        answer = ask_agent(user_message, saved_event=saved_event)
         print(f"\nAgente: {answer}\n")
 
 

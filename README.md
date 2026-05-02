@@ -4,43 +4,48 @@ Um agente de IA para auxiliar no cuidado diário de uma criança, com memória p
 
 ## 🧠 Sobre o projeto
 
-Este projeto implementa um agente conversacional que:
+Este projeto implementa um agente conversacional que simula um assistente pessoal para apoiar a rotina de cuidados da Cecília.
 
-- utiliza um LLM local (Ollama)
-- mantém memória persistente com SQLite
-- constrói contexto dinamicamente via prompt
-- responde perguntas com base no histórico registrado
+A partir de mensagens em linguagem natural, o agente é capaz de:
 
-A ideia é simular um assistente pessoal para apoiar a rotina de cuidados da Cecília.
+- interpretar eventos da rotina (sono, alimentação, saúde, etc.)
+- armazenar essas informações de forma estruturada
+- recuperar memórias relevantes
+- responder perguntas com base no histórico
 
 ---
 
 ## 🚀 Funcionalidades
 
-- 💬 Interface CLI (terminal)
+- 💬 Interface via CLI (terminal)
 - 🧠 LLM local com Ollama (sem custo de API)
 - 💾 Memória persistente com SQLite
-- 🧾 Contexto dinâmico via prompt engineering
+- 🧾 Extração estruturada de eventos com LLM
+- 🔎 Recuperação de contexto (RAG simples)
 - 🧠 Respostas baseadas em histórico
 
 ---
 
+
 ## 🏗️ Arquitetura
-Usuário (CLI)
-↓
-main.py (loop de interação)
-↓
-agent.py (construção de prompt + chamada LLM)
-↓
-Ollama (llama3)
-↓
-Resposta
 
-Memória:
- SQLite (memory.py)
-↑
-save_memory / get_recent_memories
+Usuário (CLI)<br/>
+↓<br/>
+main.py (loop de interação)<br/>
+↓<br/>
+agent.py (extração + resposta)<br/>
+↓<br/>
+Ollama (llama3)<br/>
+↓<br/>
+Resposta<br/>
 
+Memória:<br/>
+ SQLite (memory.py)<br/>
+↑<br/>
+save_memory / search_memories<br/>
+
+RAG:<br/>
+ rag.py (recuperação de contexto)<br/>
 
 ---
 
@@ -83,37 +88,90 @@ python main.py
 
 ---
 
-## Estado atual do projeto
+## 💡Exemplo de uso
 
-- Agente CLI em Python
-- LLM local com Ollama
-- Memória persistente com SQLite
-- Extração de eventos da rotina com LLM
-- Memória estruturada por categoria, tipo de evento e horário
-- Contexto dinâmico enviado ao modelo
+Você: a Cecília dormiu às 13h
+Agente: Registrei 😊
 
-## Exemplo de memória estruturada
+Você: a Cecília acordou da soneca às 15h
+Agente: Anotado 💛
 
-Uma frase como:
+Você: foram quantas sonecas?
+Agente: Foi 1 soneca.
 
-Cecília acordou da soneca às 15h
+Você: como foi a rotina hoje?
+Agente:
+Hoje a Cecília:
+- Dormiu às 13h e acordou às 15h
+- Mamou às 16h
+
+No geral, teve uma rotina tranquila 😊
+
+## 🧠 Como funciona
+
+O agente combina três conceitos principais:
+
+1. Memória estruturada
+
+Eventos são armazenados com:
+
+categoria (sono, alimentação, saúde…)
+tipo de evento (inicio_soneca, mamou…)
+horário
+texto original
+
+2. Extração com LLM
+
+O modelo interpreta mensagens como:
+
+"a Cecília acordou da soneca às 15h"
+
+E transforma em dados estruturados.
+
+3. RAG (Retrieval-Augmented Generation)
+
+O agente recupera memórias relevantes antes de responder.
+
+Exemplo:
+
+pergunta sobre sono → busca apenas eventos de sono
+pergunta sobre "hoje" → filtra por data atual
 
 ## 📌 Próximos passos
 
-  - Queries inteligentes
-  - RAG simples por categoria
-  - RAG com embeddings
-  - FastAPI
-  - Interface web
+### 🧠 Evolução do agente
+- Melhorar filtros temporais (ontem, últimos dias)
+- RAG com embeddings (busca semântica)
+- Refinamento da classificação de eventos
 
-##  Aprendizados
+### 🌐 API e integração
+- Criar API com FastAPI
+- Expor endpoints para interação com o agente
+- Separar camada de serviço (agent) da interface
 
- - LLM local com Ollama
- - CLI
- - SQLite
- - memória persistente
- - memória estruturada
- - extração de eventos com LLM
+### 📱 Integração com WhatsApp
+- Integrar com WhatsApp Business API
+- Receber mensagens via webhook
+- Permitir registrar eventos da rotina via WhatsApp
+- Responder automaticamente perguntas sobre a rotina
+- Evoluir para experiência de "assistente familiar"
+
+### 🖥️ Interface
+- Interface web simples
+- Dashboard da rotina da criança
+- Visualização de padrões (sono, alimentação, etc.)
+
+### 🚀 Escalabilidade
+- Evoluir de SQLite para banco mais robusto
+- Estruturar logs e monitoramento
+- Modularizar o agente para múltiplos usuários
+
+##  📚 Aprendizados
+- Uso de LLM local com Ollama
+- Construção de agentes conversacionais
+- Modelagem de memória estruturada
+- RAG simples com SQLite
+- Prompt engineering para controle de comportamento
 
 ## 👩‍💻 Autora
 Jenifer,</br>

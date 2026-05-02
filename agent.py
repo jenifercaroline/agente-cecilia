@@ -1,23 +1,7 @@
 import json
 import requests
 from prompts import SYSTEM_PROMPT
-from memory import get_recent_memories
-
-
-def format_memories():
-    memories = get_recent_memories()
-
-    if not memories:
-        return "Nenhuma memória registrada ainda."
-
-    formatted = []
-
-    for raw_text, category, event_type, event_time, notes, created_at in memories:
-        formatted.append(
-            f"- categoria={category}; evento={event_type}; horário={event_time}; notas={notes}; texto_original={raw_text}; criado_em={created_at}"
-        )
-
-    return "\n".join(formatted)
+from rag import retrieve_relevant_memories, format_retrieved_memories
 
 
 def extract_memory_event(user_message: str) -> dict:
@@ -25,6 +9,7 @@ def extract_memory_event(user_message: str) -> dict:
 Você é um extrator de eventos da rotina de uma criança.
 
 Leia a mensagem e retorne APENAS um JSON válido.
+Não escreva explicações fora do JSON.
 
 Categorias possíveis:
 - sono
@@ -37,7 +22,7 @@ Categorias possíveis:
 Tipos de evento possíveis:
 - inicio_soneca
 - fim_soneca
-- acordou
+- acordou_dia
 - mamou
 - comeu
 - almocou
@@ -50,13 +35,12 @@ Tipos de evento possíveis:
 
 Regras importantes:
 - "foi fazer soneca", "dormiu", "tirou soneca" = inicio_soneca
-- "acordou da soneca", "acordou das sonecas" = fim_soneca
-- "acordou às 7h" sem mencionar soneca = acordou
+- "acordou da soneca", "acordou das sonecas", "acordou da soncea" = fim_soneca
+- "acordou às 7h" sem mencionar soneca = acordou_dia
 - não confunda fim_soneca com inicio_soneca
 - erros de digitação podem acontecer, como "soncea" significando "soneca"
-- frases com "teve febre após vacina", "reação da vacina" → vacina_reacao
-- frases com "tomou vacina", "foi vacinada" → vacina_aplicada
-
+- frases com "teve febre após vacina", "reação da vacina" = vacina_reacao
+- frases com "tomou vacina", "foi vacinada" = vacina_aplicada
 
 Se a mensagem NÃO for um evento relevante da rotina, retorne:
 {{"should_save": false}}
@@ -64,6 +48,7 @@ Se a mensagem NÃO for um evento relevante da rotina, retorne:
 Se for relevante, retorne:
 {{
   "should_save": true,
+  "raw_text": "{user_message}",
   "category": "...",
   "event_type": "...",
   "event_time": "...",
@@ -94,23 +79,66 @@ Mensagem:
         return {"should_save": False, "notes": f"Erro ao interpretar JSON: {text}"}
 
 
-def ask_agent(user_message: str) -> str:
-    memories = format_memories()
+def ask_agent(user_message: str, saved_event: dict | None = None) -> str:
+    relevant_memories = retrieve_relevant_memories(user_message)
+    memories = format_retrieved_memories(relevant_memories)
+
+    event_context = "Nenhum evento foi salvo agora."
+
+    if saved_event:
+        event_context = f"""
+Um evento acabou de ser salvo:
+- categoria={saved_event.get("category")}
+- evento={saved_event.get("event_type")}
+- horário={saved_event.get("event_time")}
+- notas={saved_event.get("notes")}
+"""
 
     prompt = f"""
 {SYSTEM_PROMPT}
 
-Memórias estruturadas recentes:
+Contexto do evento atual:
+{event_context}
+
+Memórias relevantes recuperadas:
 {memories}
 
 Mensagem da usuária:
 {user_message}
 
-Responda considerando as memórias quando for útil.
-Se a pergunta envolver contagem, use os tipos de evento estruturados.
-Exemplo:
-- Para contar sonecas, conte eventos inicio_soneca.
+Regras de resposta:
+
+TIPO 1 — Registro de evento:
+- Se a mensagem for apenas um registro de rotina, responda curto.
+- Exemplos de registro: "dormiu às 13h", "mamou às 10h", "passeou no shopping", "tomou vacina".
+- Para registro, NÃO liste histórico.
+- Para registro, NÃO faça resumo.
+- Para registro, NÃO explique o sistema.
+- Para registro, responda algo como: "Registrei 😊" ou "Anotado 💛".
+
+TIPO 2 — Pergunta específica:
+- Se for pergunta direta, responda direto.
+- Exemplos: "quantas sonecas?", "ela mamou hoje?", "teve febre?"
+- Use as memórias recuperadas.
+- Não enrole.
+
+TIPO 3 — Pergunta aberta:
+- Se for algo como "como foi o dia?", "como foi a rotina?", "como foi hoje?", faça um resumo organizado.
+- Agrupe por tipo quando fizer sentido: sono, alimentação, saúde, vacina, rotina.
+- Use apenas memórias relevantes.
+
+Regras gerais:
+- Nunca invente eventos.
+- Nunca traga memória irrelevante.
+- Se a pergunta envolver "hoje", use apenas memórias de hoje.
+- Se a pergunta envolver contagem, use os tipos de evento estruturados.
+- Para contar sonecas, conte apenas eventos inicio_soneca.
 - Não conte fim_soneca como uma nova soneca.
+- Se a usuária perguntar sobre sono, priorize memórias da categoria sono.
+- Se perguntar sobre vacina, priorize memórias da categoria vacina.
+- Se perguntar sobre saúde, priorize memórias da categoria saude.
+- Responda como uma pessoa ajudando, não como um sistema técnico.
+- Seja natural, simples e breve quando possível.
 
 Agente:
 """
